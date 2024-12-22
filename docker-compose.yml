@@ -1,0 +1,41 @@
+version: '3'
+services:
+  oracle-db:
+    image: gvenzl/oracle-xe:latest
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: P@ssw0rd
+      # ORACLE_RANDOM_PASSWORD: true
+      APP_USER: my_user
+      APP_USER_PASSWORD: 123456
+
+  spring-boot-app:
+      build:
+        context: ./backend
+        dockerfile: Dockerfile
+      ports:
+        - "5050:5050"
+      depends_on:
+        - oracle-db
+      environment:
+        SPRING_DATASOURCE_URL: "jdbc:oracle:thin:@oracle-db:1521/FREEPDB1"
+        SPRING_DATASOURCE_USERNAME: "my_user"
+        SPRING_DATASOURCE_PASSWORD: "123456"
+      restart: on-failure
+      volumes:
+        - shared_volume:/shared
+
+  react-app:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+      ports:
+        - "3000:80"
+      restart:
+        on-failure
+      volumes:
+        - shared_volume:/usr/share/nginx/html/products
+
+volumes:
+  shared_volume:
